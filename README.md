@@ -6,5 +6,4 @@ prevent, detect, respond, protect. Every number comes from executed code on the 
 
 Live: https://azisseno.github.io/fraud-economics-lab/
 
-Companion to our team presentation and Colab notebook. Built by Azis Prasetyotomo
-with my MSIS 502 project team, UW Foster MSIS, 2026-08-17.
+Companion to our team presentation and Colab notebook. Built by Team 2, UW Foster MSIS, 2026-08-17.
