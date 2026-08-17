@@ -90,8 +90,7 @@
   .costval{font:800 22px var(--sans);color:var(--orange);min-width:64px;text-align:right;font-variant-numeric:tabular-nums}
   .sim-readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0}
   .netbars{display:flex;align-items:flex-end;gap:10px;height:210px;padding-top:26px}
-  .nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;
-    cursor:pointer;background:none;border:none;padding:0}
+  .nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
   .nb .v{font:600 11px var(--mono);color:var(--muted);margin-bottom:5px;white-space:nowrap}
   .nb .bar{width:100%;border-radius:5px 5px 0 0;background:var(--card2);border:1px solid var(--line);
     border-bottom:none;transition:height .35s ease,background .25s;min-height:4px}
@@ -109,6 +108,10 @@
     background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 16px}
   .toggle input{accent-color:var(--green);width:17px;height:17px}
   .counters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .ratio{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-top:12px;border:1px solid var(--line);background:var(--card2)}
+  .ratio span{display:block;height:100%;transition:width .35s ease}
+  #ratioLost{background:var(--red)}
+  #ratioSaved{background:var(--green)}
   #epsvg text{font-family:var(--mono)}
 
   /* ---------- protect ---------- */
@@ -164,10 +167,11 @@
 <section class="chapter" id="problem">
   <div class="wrap rv">
     <div class="eyebrow">01 · The problem</div>
-    <h2>Fraud is so rare that accuracy lies</h2>
-    <p class="lede">Only 0.58% of transactions are fraudulent. A model that predicts <b>legitimate, every single time</b>
-    scores 99.6% accuracy and catches nothing. So the real questions are business questions: how much fraud can you catch,
-    how many good customers do you disturb to catch it, and how fast can you act when you do.</p>
+    <h2>A model that does nothing scores 99.6% accuracy</h2>
+    <p class="lede">Only 0.58% of transactions are fraudulent. So a model that just predicts <b>legitimate, every single time</b>
+    gets a 99.6% accuracy score while catching zero fraud. That is why we never grade on accuracy here. The real questions are
+    business questions: how much fraud can you catch, how many good customers do you disturb to catch it, and how fast can you
+    act when you do.</p>
     <div class="chips">
       <div class="chip"><div class="big c-red">0.58%</div><div class="cap">of transactions are fraud. 1 in 173.</div></div>
       <div class="chip"><div class="big">99.6%</div><div class="cap">accuracy scored by a model that does nothing</div></div>
@@ -205,25 +209,24 @@
     <div class="eyebrow">03 · Detect</div>
     <h2>Reviewing 1% of transactions catches 98% of the stolen dollars</h2>
     <p class="lede">Our model does not decide anything. It ranks every transaction by risk, and the business chooses how deep
-    to review. Deeper catches more fraud but costs more reviews. <b>Drag the cost slider</b> and watch the best depth move:
-    this is the sensitivity analysis, live.</p>
+    to review. There is one thing to do here: <b>drag the cost of one review</b>. The page recomputes every queue depth and
+    highlights the best one in green. Each bar is a depth; its height is net benefit (fraud dollars caught minus review cost).</p>
     <div class="panel">
-      <div class="kbtns" id="kbtns" role="group" aria-label="Choose review depth"></div>
       <div class="sliderrow">
         <label for="cost">COST PER REVIEW</label>
         <input type="range" id="cost" min="1" max="20" step="0.5" value="5" aria-label="Cost per review in dollars">
         <div class="costval" id="costval">$5.0</div>
       </div>
       <div class="sim-readout">
+        <div class="chip"><div class="big" id="bestk">k = 1%</div><div class="cap">best queue depth at this cost, picked by the numbers</div></div>
         <div class="chip"><div class="big c-green" id="net">$1.084M</div><div class="cap">net benefit over the 6 month test period</div></div>
         <div class="chip"><div class="big c-blue" id="caught">98.1%</div><div class="cap">of $1,133,325 fraud dollars caught</div></div>
         <div class="chip"><div class="big c-orange" id="perday">29</div><div class="cap">reviews per day. Half of one analyst.</div></div>
-        <div class="chip"><div class="big" id="roi">44x</div><div class="cap">dollars of fraud flagged per review dollar spent</div></div>
       </div>
       <div class="netbars" id="netbars" aria-label="Net benefit at each review depth"></div>
       <div class="optnote" id="optnote"></div>
     </div>
-    <div class="smallnote">caught dollar figures are exact from the notebook's review budget sweep · only the cost assumption moves · green ring = best depth at this cost</div>
+    <div class="smallnote">caught dollar figures are exact from the notebook's review budget sweep · only the cost assumption moves · the green bar is the best depth at the current cost</div>
   </div>
 </section>
 
@@ -234,14 +237,20 @@
     <h2>92.5% of the money is stolen after the first hit</h2>
     <p class="lede">Fraud arrives as a burst. A compromised card takes a median of <b>10 fraudulent charges</b>, the second one
     landing about <b>1.1 hours</b> after the first. The bank is not losing money because fraud is hard to detect.
-    It is losing money in the hours after the first detection, while the alert waits in a queue.</p>
+    It is losing money in the hours after the first detection, while the alert waits in a queue. <b>Drag the confirmation delay</b>: the slower the bank confirms,
+    the more of the burst gets through.</p>
     <div class="split">
       <div class="panel">
         <svg id="epsvg" viewBox="0 0 640 200" aria-label="Timeline of one fraud episode over 45 hours. Ten hits land in a burst; with the freeze enabled, all but the first are crossed out."></svg>
         <div class="controls">
           <button class="play" id="play">Play the episode</button>
-          <label class="toggle"><input type="checkbox" id="freeze"> Freeze card at first confirmed fraud</label>
         </div>
+        <div class="sliderrow" style="margin-top:14px">
+          <label for="delay">TIME TO CONFIRM + FREEZE</label>
+          <input type="range" id="delay" min="0" max="5" step="1" value="5" aria-label="Time to confirm and freeze the card">
+          <div class="costval" id="delayval" style="min-width:84px">never</div>
+        </div>
+        <div class="ratio" aria-hidden="true"><span id="ratioLost"></span><span id="ratioSaved"></span></div>
         <div class="counters">
           <div class="chip"><div class="big c-red" id="lost">$0</div><div class="cap">stolen in this episode</div></div>
           <div class="chip"><div class="big c-green" id="saved">$0</div><div class="cap">blocked by the freeze</div></div>
@@ -252,7 +261,7 @@
         <div class="chip" style="margin-top:12px"><div class="big">$5,200 to $390</div><div class="cap">what one compromised card costs today, and what it costs with the freeze</div></div>
         <div class="callout"><b>The data sets the deadline:</b> confirm the first alert within about an hour, because the median second
         hit lands 1.1 hours later. The model's job is to surface that first hit fast: 86% of them already rank inside its top 1% of scores.</div>
-        <div class="smallnote">episode drawn to the measured medians (illustrative) · portfolio figures are exact · freeze assumes instant confirmation, so treat it as a ceiling</div>
+        <div class="smallnote">episode drawn to the measured medians (illustrative) · portfolio figures are exact · the $2.37M/yr figure assumes freezing right after the first hit, so treat it as a ceiling</div>
       </div>
     </div>
   </div>
@@ -281,10 +290,39 @@
   </div>
 </section>
 
-<!-- ============ 06 THE STAIRCASE ============ -->
+<!-- ============ 06 THE FEATURE ============ -->
+<section class="chapter" id="feature">
+  <div class="wrap rv">
+    <div class="eyebrow">06 · What we would ship</div>
+    <h2>The policy, felt from the checkout</h2>
+    <p class="lede">The four moves become one decision engine. <b>Try a purchase</b> and watch it decide.
+    The logic is distilled from the published analysis for illustration; production thresholds would be recalibrated on live data.</p>
+    <div class="split">
+      <div class="panel">
+        <div class="eyebrow" style="margin-bottom:12px">MOCK CHECKOUT</div>
+        <div class="kbtns" id="amtbtns" role="group" aria-label="Choose an amount"></div>
+        <div class="sliderrow" style="margin:14px 0 10px">
+          <label for="amt">AMOUNT $</label>
+          <input type="number" id="amt" value="950" min="1" max="20000" style="flex:1;font:700 16px var(--sans);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card2);color:var(--ink)">
+        </div>
+        <div class="controls" style="margin:4px 0 14px">
+          <label class="toggle"><input type="checkbox" id="online" checked> online purchase</label>
+          <label class="toggle"><input type="checkbox" id="night"> overnight, 10pm to 4am</label>
+        </div>
+        <button class="play" id="pay" style="width:100%">Pay now</button>
+      </div>
+      <div>
+        <div id="outcome" role="status"></div>
+      </div>
+    </div>
+    <div class="smallnote">rules behind the demo: the $800 to $1,200 online window runs 50.91% fraud (98x) · overnight runs 16x · 99.1% of purchases are never touched</div>
+  </div>
+</section>
+
+<!-- ============ 07 THE STAIRCASE ============ -->
 <section class="chapter" id="staircase">
   <div class="wrap rv">
-    <div class="eyebrow">06 · The whole case</div>
+    <div class="eyebrow">07 · The whole case</div>
     <h2>The business case is a staircase</h2>
     <p class="lede">Three steps, each one standing on the last.</p>
     <div class="stairs">
@@ -318,6 +356,7 @@
       <p>The data is simulated (Sparkov, 1.85M transactions, 2019 to 2020), which makes patterns cleaner than live card fraud.
       Dollar benefits are illustrative upper bounds: they treat every flagged fraud dollar as saved and assume instant confirmation.</p>
       <p>The prevent, detect and respond layers act on overlapping dollars. They compose into one defense; they do not add up.</p>
+      <p>The checkout demo is illustrative policy logic distilled from the published rules, not the trained model.</p>
       <p>Every figure on this page comes from executed code on the full 555,719 transaction holdout: model metrics from a clean
       top to bottom run, the review sweep from the notebook's printed table, and band rates from a deterministic recount of all
       1,852,394 transactions.</p>
@@ -446,17 +485,11 @@ const SWEEP=[
   {k:"2%",n:11114,caught:1118190,pct:"98.7%"},{k:"3%",n:16672,caught:1122172,pct:"99.0%"},
   {k:"5%",n:27786,caught:1124026,pct:"99.2%"}];
 (function(){
-  let sel=2;
-  const kb=$("kbtns"), bars=$("netbars");
-  SWEEP.forEach((r,i)=>{
-    const b=document.createElement("button");
-    b.textContent=r.k; b.setAttribute("aria-pressed",i===sel);
-    b.onclick=()=>{sel=i;render()};
-    kb.appendChild(b);
-    const nb=document.createElement("button");
-    nb.className="nb"; nb.setAttribute("aria-pressed",i===sel);
+  const bars=$("netbars");
+  SWEEP.forEach(r=>{
+    const nb=document.createElement("div");
+    nb.className="nb";
     nb.innerHTML=`<span class="v"></span><span class="bar"></span><span class="k">${r.k}</span>`;
-    nb.onclick=()=>{sel=i;render()};
     bars.appendChild(nb);
   });
   function render(){
@@ -464,23 +497,23 @@ const SWEEP=[
     $("costval").textContent="$"+cost.toFixed(1);
     const nets=SWEEP.map(r=>r.caught-r.n*cost);
     const best=nets.indexOf(Math.max(...nets)), maxN=Math.max(...nets,1);
-    kb.querySelectorAll("button").forEach((b,i)=>{
-      b.setAttribute("aria-pressed",i===sel); b.classList.toggle("best",i===best);});
     bars.querySelectorAll(".nb").forEach((c,i)=>{
-      c.setAttribute("aria-pressed",i===sel);
       const bar=c.querySelector(".bar");
       bar.style.height=Math.max(4,nets[i]/maxN*150)+"px";
-      bar.style.background=i===best?"var(--green)":(i===sel?"var(--blue)":"var(--card2)");
+      bar.style.background=i===best?"var(--green)":"var(--card2)";
+      const k=c.querySelector(".k");
+      k.style.color=i===best?"var(--ink)":"var(--muted)";
       c.querySelector(".v").textContent="$"+(nets[i]/1e6).toFixed(2)+"M";
     });
-    const r=SWEEP[sel];
+    const r=SWEEP[best];
+    $("bestk").textContent="k = "+r.k;
     $("net").textContent="$"+((r.caught-r.n*cost)/1e6).toFixed(3)+"M";
     $("caught").textContent=r.pct;
     $("perday").textContent=Math.round(r.n/193);
-    $("roi").textContent=Math.round(r.caught/(r.n*cost))+"x";
-    $("optnote").innerHTML=`At <b>$${cost.toFixed(0)} per review</b> the best depth is <b>k = ${SWEEP[best].k}</b>. `+
+    const roi=Math.round(r.caught/(r.n*cost));
+    $("optnote").innerHTML=`At <b>$${cost.toFixed(0)} per review</b> the numbers pick <b>k = ${r.k}</b>: about $${roi} of fraud flagged per review dollar. `+
       `The curve is flat between 0.5% and 2%, so analyst capacity can pick the point; below 0.5% the net falls hard. `+
-      `Slide the cost past about $12 and watch the optimum tighten from 1% to 0.5%: the model does not choose, the economics do.`;
+      `Watch the best depth walk left as reviews get more expensive: 1.5% at $1, 1% at $5, 0.5% past about $12.`;
   }
   $("cost").addEventListener("input",render);
   render();
@@ -490,7 +523,8 @@ const SWEEP=[
 const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1,amt:968},
   {t:5.1,amt:287},{t:6.2,amt:1120},{t:8.0,amt:199},{t:21.0,amt:641},{t:44.9,amt:415}];
 (function(){
-  const svg=$("epsvg"), W=640,H=200,PL=36,PR=12,AX=152, FREEZE=1.0;
+  const svg=$("epsvg"), W=640,H=200,PL=36,PR=12,AX=152;
+  const DELAYS=[{v:0.25,lab:"15 min"},{v:1,lab:"1 hour"},{v:2,lab:"2 hours"},{v:4,lab:"4 hours"},{v:8,lab:"8 hours"},{v:Infinity,lab:"never"}];
   const xOf=t=>PL+(W-PL-PR)*Math.log1p(t)/Math.log1p(46);
   const rOf=a=>5+9*(a-199)/(1120-199);
   let playing=false;
@@ -502,14 +536,15 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
     s+=`<text x="${PL}" y="16" fill="#8792a3" font-size="10.5">one compromised card · each dot is a fraudulent charge · size = amount</text>`;
     return s;
   }
+  function delayCfg(){ return DELAYS[+$("delay").value]; }
   function draw(progress){
-    const frz=$("freeze").checked;
+    const d=delayCfg(), f=d.v;
     let s=base(), lost=0, saved=0;
-    if(frz) s+=`<line x1="${xOf(FREEZE)}" y1="28" x2="${xOf(FREEZE)}" y2="${AX}" stroke="#0e8a63" stroke-width="2" stroke-dasharray="5 4"/>
-      <text x="${xOf(FREEZE)+6}" y="40" fill="#0e8a63" font-size="11" font-weight="700">card frozen at 1h</text>`;
+    if(isFinite(f)) s+=`<line x1="${xOf(f)}" y1="28" x2="${xOf(f)}" y2="${AX}" stroke="#0e8a63" stroke-width="2" stroke-dasharray="5 4"/>
+      <text x="${xOf(f)+6}" y="40" fill="#0e8a63" font-size="11" font-weight="700">frozen after ${d.lab}</text>`;
     for(const h of HITS){
       if(h.t>progress) continue;
-      const blocked=frz&&h.t>=FREEZE;
+      const blocked=isFinite(f)&&h.t>=f;
       if(blocked) saved+=h.amt; else lost+=h.amt;
       const cx=xOf(h.t), r=rOf(h.amt), cy=AX-26-r;
       s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${blocked?"none":"#c43b3a"}" stroke="${blocked?"#0e8a63":"#c43b3a"}" stroke-width="2"/>`;
@@ -518,6 +553,11 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
     svg.innerHTML=s;
     $("lost").textContent=fmt$(lost);
     $("saved").textContent=fmt$(saved);
+    $("delayval").textContent=d.lab;
+    $("delayval").style.color=isFinite(f)?"var(--green)":"var(--red)";
+    const tot=lost+saved||1;
+    $("ratioLost").style.width=(100*lost/tot)+"%";
+    $("ratioSaved").style.width=(100*saved/tot)+"%";
   }
   function play(){
     if(playing) return;
@@ -531,7 +571,7 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
     })(t0);
   }
   $("play").onclick=play;
-  $("freeze").onchange=()=>{if(!playing)draw(46)};
+  $("delay").addEventListener("input",()=>{if(!playing)draw(46)});
   draw(46);
 })();
 
@@ -561,6 +601,56 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
   }
   draw();
   let t; addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(draw,150)});
+})();
+
+/* ---------- 06 FEATURE: mock checkout ---------- */
+(function(){
+  const AMTS=[45,250,950,1600];
+  const ab=$("amtbtns");
+  AMTS.forEach(a=>{
+    const b=document.createElement("button");
+    b.textContent="$"+a.toLocaleString();
+    b.onclick=()=>{$("amt").value=a; syncBtns(); decide();};
+    ab.appendChild(b);
+  });
+  function syncBtns(){
+    const v=parseFloat($("amt").value);
+    ab.querySelectorAll("button").forEach((b,i)=>b.setAttribute("aria-pressed",AMTS[i]===v));
+  }
+  function card(color,title,body,why){
+    return `<div class="panel" style="border-left:4px solid var(${color})">
+      <div style="font:800 18px var(--sans);margin-bottom:6px">${title}</div>
+      <div style="color:var(--muted);font-size:14px;margin-bottom:10px">${body}</div>
+      <div class="smallnote" style="margin-top:0">${why}</div></div>`;
+  }
+  function decide(){
+    const a=parseFloat($("amt").value)||0, online=$("online").checked, night=$("night").checked;
+    const out=$("outcome");
+    if(a>=800&&a<1200&&online){
+      out.innerHTML=card("--orange","One quick check",
+        `This amount sits in the verification window. We texted a code to the cardholder's phone.
+         <button class="play" id="codebtn" style="margin-top:10px;display:block">Enter the code: 4 8 2 1</button>`,
+        "PREVENT fired: half of online charges between $800 and $1,200 are fraud (98x baseline). A thief with a stolen card number fails this step, and the fraud dies before any money moves.");
+      $("codebtn").onclick=()=>{
+        out.innerHTML=card("--green","Approved, about 10 seconds later",
+          "The real cardholder barely noticed. A stolen card would have been stopped cold, before authorization.",
+          "PREVENT: the window rule costs the customer seconds and costs the bank nothing. No analyst, no model, no queue.");
+      };
+    } else if(night&&online&&a>=236.86){
+      out.innerHTML=card("--blue","Approved now, queued for a look",
+        "The purchase goes through instantly. Behind the scenes it lands in today's review queue, and an analyst sees it within the hour.",
+        "DETECT + RESPOND fired: overnight online purchases run 16x the baseline fraud rate, and amounts above the tree's $236.86 split carry most of the fraud weight. It becomes one of about 29 reviews a day; if it is confirmed as fraud, the card is frozen before the median second hit at 1.1 hours.");
+    } else {
+      out.innerHTML=card("--green","Approved instantly",
+        "No friction, no delay, nothing to notice.",
+        "PROTECT: like 99.1% of purchases, this one never feels the system at all. That is the point.");
+    }
+    syncBtns();
+  }
+  $("pay").onclick=decide;
+  $("amt").addEventListener("input",syncBtns);
+  syncBtns();
+  decide();
 })();
 </script>
 </body>
