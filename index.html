@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fraud Economics Lab · The Business Case</title>
+<meta name="description" content="The business case from an MSIS 502 credit card fraud analysis: prevent, detect, respond, protect. Every number computed from 1.85M transactions.">
+<style>
+  :root{
+    --bg:#f9fafc; --bg2:#f0f3f8; --card:#ffffff; --card2:#edf1f7; --line:#d3dae5;
+    --ink:#1c2433; --muted:#5b6576; --faint:#8792a3;
+    --blue:#1d5fb8; --red:#c43b3a; --green:#0e8a63; --orange:#c2571e;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Consolas,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+  body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans)}
+  ::selection{background:var(--blue);color:#fff}
+  a{color:var(--blue)}
+  button{font-family:var(--sans)}
+  :focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+  .eyebrow{font:600 11px/1 var(--mono);letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+  .chapter{padding:88px 0 72px;border-top:1px solid var(--line)}
+  .chapter h2{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.02em;margin:14px 0 10px;text-wrap:balance}
+  .lede{color:var(--muted);font-size:17px;max-width:62ch;margin-bottom:30px}
+  .lede b, .copy b{color:var(--ink)}
+  .copy{max-width:62ch;color:var(--muted);margin-top:18px}
+  .copy p{margin-bottom:12px}
+
+  /* reveal on scroll */
+  .rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+  .rv.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion: reduce){ .rv{opacity:1;transform:none;transition:none} }
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;min-height:92vh;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+  #dots{position:absolute;inset:0;width:100%;height:100%}
+  .hero .wrap{position:relative;padding-top:60px;padding-bottom:40px}
+  .hero h1{font-size:clamp(34px,6vw,64px);font-weight:850;letter-spacing:-.03em;line-height:1.04;max-width:16ch;text-wrap:balance}
+  .hero h1 .accent{color:var(--red)}
+  .hero .answer{display:block;color:var(--green)}
+  .hero .sub{margin-top:22px;color:var(--muted);font-size:18px;max-width:56ch}
+  .provchips{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+  .prov{font:500 12px/1.3 var(--mono);color:var(--muted);background:rgba(255,255,255,.82);border:1px solid var(--line);
+    border-radius:999px;padding:7px 13px;backdrop-filter:blur(2px)}
+  .prov b{color:var(--ink)}
+  .findnote{position:absolute;right:24px;bottom:18px;font:500 11px/1.4 var(--mono);color:var(--faint);text-align:right}
+  .scrollcue{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);color:var(--faint);font:600 11px var(--mono);letter-spacing:.15em}
+
+  /* ---------- stat chips ---------- */
+  .chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:26px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:0 1px 2px rgba(28,36,51,.04)}
+  .chip .big{font-size:28px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .chip .cap{color:var(--muted);font-size:12.5px;margin-top:4px}
+  .c-blue{color:var(--blue)} .c-red{color:var(--red)} .c-green{color:var(--green)} .c-orange{color:var(--orange)}
+
+  /* ---------- panels ---------- */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 1px 2px rgba(28,36,51,.05),0 6px 20px rgba(28,36,51,.06)}
+  .split{display:grid;grid-template-columns:1.25fr .8fr;gap:22px;align-items:start}
+  @media (max-width:880px){ .split{grid-template-columns:1fr} }
+  .callout{border:1px solid var(--line);border-left:3px solid var(--green);background:var(--card2);
+    border-radius:10px;padding:14px 16px;margin-top:14px;font-size:14.5px;color:var(--muted)}
+  .callout b{color:var(--ink)}
+  .callout.orange{border-left-color:var(--orange)}
+  .callout.red{border-left-color:var(--red)}
+  .smallnote{font:500 12px/1.5 var(--mono);color:var(--faint);margin-top:14px}
+
+  /* ---------- band chart ---------- */
+  .chartbox{position:relative}
+  #bandsvg text{font-family:var(--mono)}
+  .tip{position:fixed;pointer-events:none;background:#ffffff;border:1px solid var(--line);border-radius:8px;
+    padding:9px 12px;font:500 12.5px/1.5 var(--mono);color:var(--ink);z-index:50;display:none;max-width:240px;
+    box-shadow:0 8px 24px rgba(28,36,51,.16)}
+  .tip .t-muted{color:var(--muted)}
+
+  /* ---------- simulator ---------- */
+  .kbtns{display:flex;gap:8px;flex-wrap:wrap}
+  .kbtns button{background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:9px;
+    padding:8px 14px;font:700 14px var(--sans);cursor:pointer;transition:background .2s,border-color .2s}
+  .kbtns button:hover{border-color:var(--blue)}
+  .kbtns button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+  .kbtns button.best{box-shadow:0 0 0 2px var(--green)}
+  .sliderrow{display:flex;align-items:center;gap:14px;margin:18px 0 4px}
+  .sliderrow label{font:600 12px var(--mono);color:var(--muted);letter-spacing:.06em;white-space:nowrap}
+  .sliderrow input{flex:1;accent-color:var(--blue);min-width:120px}
+  .costval{font:800 22px var(--sans);color:var(--orange);min-width:64px;text-align:right;font-variant-numeric:tabular-nums}
+  .sim-readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0}
+  .netbars{display:flex;align-items:flex-end;gap:10px;height:210px;padding-top:26px}
+  .nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;
+    cursor:pointer;background:none;border:none;padding:0}
+  .nb .v{font:600 11px var(--mono);color:var(--muted);margin-bottom:5px;white-space:nowrap}
+  .nb .bar{width:100%;border-radius:5px 5px 0 0;background:var(--card2);border:1px solid var(--line);
+    border-bottom:none;transition:height .35s ease,background .25s;min-height:4px}
+  .nb .k{font:700 12.5px var(--mono);margin-top:8px;color:var(--muted)}
+  .nb[aria-pressed="true"] .k{color:var(--ink)}
+  .optnote{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  .optnote b{color:var(--ink)}
+
+  /* ---------- episode ---------- */
+  .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px}
+  .play{background:var(--blue);border:none;color:#fff;font:800 15px var(--sans);border-radius:10px;
+    padding:11px 22px;cursor:pointer}
+  .play:hover{filter:brightness(1.1)}
+  .toggle{display:flex;align-items:center;gap:9px;font:700 14px var(--sans);cursor:pointer;user-select:none;
+    background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 16px}
+  .toggle input{accent-color:var(--green);width:17px;height:17px}
+  .counters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  #epsvg text{font-family:var(--mono)}
+
+  /* ---------- protect ---------- */
+  #daywrap{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+  #daycanvas{width:100%;height:auto;display:block;border-radius:6px}
+
+  /* ---------- staircase ---------- */
+  .stairs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:end;margin-top:34px}
+  @media (max-width:720px){ .stairs{grid-template-columns:1fr;align-items:stretch} }
+  .step{border-radius:14px;padding:20px;border:1px solid var(--line)}
+  .step .n{font:600 11px var(--mono);letter-spacing:.12em;color:var(--faint)}
+  .step .amt{font-size:clamp(26px,3.4vw,40px);font-weight:850;letter-spacing:-.02em;margin:6px 0 8px;font-variant-numeric:tabular-nums}
+  .step p{font-size:13.5px;color:var(--muted)}
+  .s1{background:var(--card);min-height:170px}
+  .s2{background:var(--card);min-height:220px}
+  .s3{background:var(--card);min-height:270px}
+  .closing{margin-top:56px;text-align:center}
+  .closing .line{font-size:clamp(24px,4vw,40px);font-weight:850;letter-spacing:-.02em;max-width:22ch;margin:0 auto;text-wrap:balance}
+  .closing .line em{font-style:normal;color:var(--green)}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--line);margin-top:88px;padding:40px 0 56px}
+  .honesty{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:20px 22px;max-width:72ch}
+  .honesty h3{font-size:14px;font-weight:800;margin-bottom:8px}
+  .honesty p{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+  .credits{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:28px;
+    font:500 12px/1.7 var(--mono);color:var(--faint)}
+  .credits b{color:var(--muted);font-weight:600}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body data-palette="#1d5fb8,#c43b3a,#0e8a63,#c2571e">
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <canvas id="dots" role="img" aria-label="A field of 555,719 dots, one per test transaction, with 2,145 red fraud dots scattered among them"></canvas>
+  <div class="wrap">
+    <div class="eyebrow">MSIS 502 · Credit card fraud analysis · The business case</div>
+    <h1>This is not a fraud <span class="accent">detection</span> problem. <span class="answer">It is a confirmation speed problem.</span></h1>
+    <p class="sub">We analyzed 1.85 million card transactions and found that the money is not lost where everyone looks.
+    This page is the business case in four moves. Scroll, and touch the numbers.</p>
+    <div class="provchips">
+      <div class="prov"><b>555,719</b> test transactions behind you</div>
+      <div class="prov"><b>2,145</b> of them are fraud. Can you see them?</div>
+      <div class="prov">every number from executed code</div>
+    </div>
+  </div>
+  <div class="findnote">each dot is one real test transaction<br>red = fraud, drawn to scale</div>
+  <div class="scrollcue">SCROLL</div>
+</header>
+
+<!-- ============ 01 THE PROBLEM ============ -->
+<section class="chapter" id="problem">
+  <div class="wrap rv">
+    <div class="eyebrow">01 · The problem</div>
+    <h2>Fraud is so rare that accuracy lies</h2>
+    <p class="lede">Only 0.58% of transactions are fraudulent. A model that predicts <b>legitimate, every single time</b>
+    scores 99.6% accuracy and catches nothing. So the real questions are business questions: how much fraud can you catch,
+    how many good customers do you disturb to catch it, and how fast can you act when you do.</p>
+    <div class="chips">
+      <div class="chip"><div class="big c-red">0.58%</div><div class="cap">of transactions are fraud. 1 in 173.</div></div>
+      <div class="chip"><div class="big">99.6%</div><div class="cap">accuracy scored by a model that does nothing</div></div>
+      <div class="chip"><div class="big c-red">$2.56M</div><div class="cap">leaking per year in this portfolio if nothing changes</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 PREVENT ============ -->
+<section class="chapter" id="prevent">
+  <div class="wrap rv">
+    <div class="eyebrow">02 · Prevent</div>
+    <h2>Half the charges between $800 and $1,200 are fraud</h2>
+    <p class="lede">Fraud does not spread evenly across purchase sizes. It piles into one narrow window.
+    <b>Hover the bars</b> to see each band; the red window speaks for itself.</p>
+    <div class="split">
+      <div class="panel chartbox">
+        <svg id="bandsvg" viewBox="0 0 640 320" aria-label="Bar chart of fraud rate by transaction amount band. The 800 to 1200 dollar bands reach about 50 percent while every other band stays under 20 percent."></svg>
+      </div>
+      <div>
+        <div class="chip"><div class="big c-red">50.91%</div><div class="cap">fraud rate inside $800 to $1,200. That is 98x the 0.52% baseline, across 6,783 transactions.</div></div>
+        <div class="callout orange" style="margin-top:12px"><b>The move:</b> for online charges inside this window, trigger an automatic
+        10 second verification before the charge goes through. The fraud dies at the checkout, before any money moves. No analyst, no model, no queue.</div>
+        <div class="callout red"><b>Said honestly:</b> the window is this sharp because the data is simulated.
+        Real fraud concentrates by amount too, just less cleanly. What transfers is the method: find your portfolio's window, verify inside it, recalibrate on live data.</div>
+      </div>
+    </div>
+    <div class="smallnote">rates computed over all 1,852,394 transactions · bands as in the notebook · hover for exact values</div>
+  </div>
+</section>
+
+<!-- ============ 03 DETECT ============ -->
+<section class="chapter" id="detect">
+  <div class="wrap rv">
+    <div class="eyebrow">03 · Detect</div>
+    <h2>Reviewing 1% of transactions catches 98% of the stolen dollars</h2>
+    <p class="lede">Our model does not decide anything. It ranks every transaction by risk, and the business chooses how deep
+    to review. Deeper catches more fraud but costs more reviews. <b>Drag the cost slider</b> and watch the best depth move:
+    this is the sensitivity analysis, live.</p>
+    <div class="panel">
+      <div class="kbtns" id="kbtns" role="group" aria-label="Choose review depth"></div>
+      <div class="sliderrow">
+        <label for="cost">COST PER REVIEW</label>
+        <input type="range" id="cost" min="1" max="20" step="0.5" value="5" aria-label="Cost per review in dollars">
+        <div class="costval" id="costval">$5.0</div>
+      </div>
+      <div class="sim-readout">
+        <div class="chip"><div class="big c-green" id="net">$1.084M</div><div class="cap">net benefit over the 6 month test period</div></div>
+        <div class="chip"><div class="big c-blue" id="caught">98.1%</div><div class="cap">of $1,133,325 fraud dollars caught</div></div>
+        <div class="chip"><div class="big c-orange" id="perday">29</div><div class="cap">reviews per day. Half of one analyst.</div></div>
+        <div class="chip"><div class="big" id="roi">44x</div><div class="cap">dollars of fraud flagged per review dollar spent</div></div>
+      </div>
+      <div class="netbars" id="netbars" aria-label="Net benefit at each review depth"></div>
+      <div class="optnote" id="optnote"></div>
+    </div>
+    <div class="smallnote">caught dollar figures are exact from the notebook's review budget sweep · only the cost assumption moves · green ring = best depth at this cost</div>
+  </div>
+</section>
+
+<!-- ============ 04 RESPOND ============ -->
+<section class="chapter" id="respond">
+  <div class="wrap rv">
+    <div class="eyebrow">04 · Respond</div>
+    <h2>92.5% of the money is stolen after the first hit</h2>
+    <p class="lede">Fraud arrives as a burst. A compromised card takes a median of <b>10 fraudulent charges</b>, the second one
+    landing about <b>1.1 hours</b> after the first. The bank is not losing money because fraud is hard to detect.
+    It is losing money in the hours after the first detection, while the alert waits in a queue.</p>
+    <div class="split">
+      <div class="panel">
+        <svg id="epsvg" viewBox="0 0 640 200" aria-label="Timeline of one fraud episode over 45 hours. Ten hits land in a burst; with the freeze enabled, all but the first are crossed out."></svg>
+        <div class="controls">
+          <button class="play" id="play">Play the episode</button>
+          <label class="toggle"><input type="checkbox" id="freeze"> Freeze card at first confirmed fraud</label>
+        </div>
+        <div class="counters">
+          <div class="chip"><div class="big c-red" id="lost">$0</div><div class="cap">stolen in this episode</div></div>
+          <div class="chip"><div class="big c-green" id="saved">$0</div><div class="cap">blocked by the freeze</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="chip"><div class="big c-green">$2.37M</div><div class="cap">recoverable per year by freezing at the first confirmed fraud, out of the $2.56M leak</div></div>
+        <div class="chip" style="margin-top:12px"><div class="big">$5,200 to $390</div><div class="cap">what one compromised card costs today, and what it costs with the freeze</div></div>
+        <div class="callout"><b>The data sets the deadline:</b> confirm the first alert within about an hour, because the median second
+        hit lands 1.1 hours later. The model's job is to surface that first hit fast: 86% of them already rank inside its top 1% of scores.</div>
+        <div class="smallnote">episode drawn to the measured medians (illustrative) · portfolio figures are exact · freeze assumes instant confirmation, so treat it as a ceiling</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 PROTECT ============ -->
+<section class="chapter" id="protect">
+  <div class="wrap rv">
+    <div class="eyebrow">05 · Protect</div>
+    <h2>99.1% of customers never feel any of this</h2>
+    <p class="lede">Here is one average day: about 2,879 transactions. The system quietly scores all of them and asks a human
+    to look at <b>29</b>. Everyone else's purchase goes through untouched, and the few who are flagged get a 10 second
+    verification, never an automatically declined card.</p>
+    <div id="daywrap">
+      <canvas id="daycanvas" role="img" aria-label="Grid of 2,879 dots for one day of transactions. 29 highlighted dots are the only ones reviewed by a person."></canvas>
+      <div class="smallnote" style="margin-top:12px">one day of the test period, drawn to scale · <span class="c-orange">orange</span> = the 29 transactions a person reviews · everything else is untouched</div>
+    </div>
+    <div class="chips">
+      <div class="chip"><div class="big">0.9%</div><div class="cap">of transactions ever enter the review queue</div></div>
+      <div class="chip"><div class="big c-orange">~17</div><div class="cap">false alarms a day, resolved with a 10 second check</div></div>
+      <div class="chip"><div class="big c-blue">5.1x</div><div class="cap">cleaner alerts than the next best model, which is why the queue stays small</div></div>
+    </div>
+    <p class="copy">This matters commercially, not just politely: a wrongly declined customer is embarrassed at the register,
+    the purchase revenue is lost, and many quietly switch to the other card in their wallet for good. Precision is not a
+    modelling nicety. It is how you keep the customers you were protecting.</p>
+  </div>
+</section>
+
+<!-- ============ 06 THE STAIRCASE ============ -->
+<section class="chapter" id="staircase">
+  <div class="wrap rv">
+    <div class="eyebrow">06 · The whole case</div>
+    <h2>The business case is a staircase</h2>
+    <p class="lede">Three steps, each one standing on the last.</p>
+    <div class="stairs">
+      <div class="step s1 rv">
+        <div class="n">STEP 1 · DO NOTHING</div>
+        <div class="amt c-red" data-count="2.56" data-prefix="$" data-suffix="M/yr">$2.56M/yr</div>
+        <p>keeps leaking. That is what this portfolio loses to fraud today.</p>
+      </div>
+      <div class="step s2 rv">
+        <div class="n">STEP 2 · CHANGE ONE PROCESS</div>
+        <div class="amt c-green" data-count="2.37" data-prefix="$" data-suffix="M/yr">$2.37M/yr</div>
+        <p>comes back if cards are frozen at the first confirmed fraud. No new technology. The catch: confirmation has to be fast.</p>
+      </div>
+      <div class="step s3 rv">
+        <div class="n">STEP 3 · THE MODEL MAKES IT FAST</div>
+        <div class="amt c-blue" data-count="86" data-suffix="%">86%</div>
+        <p>of episode starting frauds sit in the model's top 1% of scores: a queue of 29 reviews a day. Half a person runs the defense of the whole portfolio.</p>
+      </div>
+    </div>
+    <div class="closing rv">
+      <p class="line">Do not buy a bigger model. <em>Buy a faster confirmation.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="honesty rv">
+      <h3>Read this before quoting the numbers</h3>
+      <p>The data is simulated (Sparkov, 1.85M transactions, 2019 to 2020), which makes patterns cleaner than live card fraud.
+      Dollar benefits are illustrative upper bounds: they treat every flagged fraud dollar as saved and assume instant confirmation.</p>
+      <p>The prevent, detect and respond layers act on overlapping dollars. They compose into one defense; they do not add up.</p>
+      <p>Every figure on this page comes from executed code on the full 555,719 transaction holdout: model metrics from a clean
+      top to bottom run, the review sweep from the notebook's printed table, and band rates from a deterministic recount of all
+      1,852,394 transactions.</p>
+    </div>
+    <div class="credits">
+      <div><b>Built by Azis Prasetyotomo</b> · with my MSIS 502 project team<br>MSIS 502 Business Data Analysis · UW Foster MSIS · 2026-08-17</div>
+      <div>companion to our team presentation and Colab notebook<br>fraud detection on the Sparkov simulated card dataset</div>
+    </div>
+  </div>
+</footer>
+
+<div class="tip" id="tip" role="status"></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const fmt$ = v => "$" + Math.round(v).toLocaleString("en-US");
+
+/* seeded PRNG so the dot fields are stable */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- hero dot field: 555,719 transactions, 2,145 fraud ---------- */
+(function(){
+  const cv=$("dots"), ctx=cv.getContext("2d");
+  function draw(){
+    const w=cv.clientWidth, h=cv.clientHeight, dpr=Math.min(devicePixelRatio||1,2);
+    cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.fillStyle="#f9fafc"; ctx.fillRect(0,0,w,h);
+    const N=555719, area=w*h, per=Math.sqrt(area/N);
+    const cols=Math.ceil(w/per), rows=Math.ceil(h/per);
+    const img=ctx.createImageData(cv.width,cv.height), d=img.data;
+    const rnd=mulberry32(20260817);
+    let drawn=0;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      if(drawn++>=N) break;
+      if(rnd()<0.45){ // sparse texture, not a solid wall
+        const x=Math.round((c*per+rnd()*per)*dpr), y=Math.round((r*per+rnd()*per)*dpr);
+        if(x<cv.width&&y<cv.height){const i=(y*cv.width+x)*4; d[i]=176;d[i+1]=188;d[i+2]=206;d[i+3]=255;}
+      }
+    }
+    ctx.putImageData(img,0,0);
+    /* the 2,145 frauds: real count, seeded positions, drawn last so they sit on top */
+    const rnd2=mulberry32(2145);
+    ctx.fillStyle="#c43b3a";
+    for(let i=0;i<2145;i++){
+      const x=rnd2()*w, y=rnd2()*h;
+      ctx.fillRect(x,y,1.6,1.6);
+    }
+  }
+  draw();
+  let t; addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(draw,150)});
+})();
+
+/* ---------- scroll reveals ---------- */
+(function(){
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);
+      if(e.target.closest("#staircase")) countUp(e.target);}
+  }),{threshold:.18});
+  document.querySelectorAll(".rv").forEach(el=>io.observe(el));
+  function countUp(scope){
+    if(reduced) return;
+    scope.querySelectorAll("[data-count]").forEach(el=>{
+      const end=parseFloat(el.dataset.count), pre=el.dataset.prefix||"", suf=el.dataset.suffix||"";
+      const dec=(String(end).split(".")[1]||"").length, t0=performance.now();
+      (function tick(now){
+        const p=Math.min(1,(now-t0)/900), v=(end*(0.2+0.8*p)).toFixed(dec);
+        el.textContent=pre+v+suf;
+        if(p<1) requestAnimationFrame(tick); else el.textContent=pre+end.toFixed(dec)+suf;
+      })(t0);
+    });
+  }
+})();
+
+/* ---------- tooltip helper ---------- */
+const tip=$("tip");
+function showTip(html,x,y){tip.innerHTML=html;tip.style.display="block";
+  const r=tip.getBoundingClientRect();
+  tip.style.left=Math.min(x+14,innerWidth-r.width-10)+"px";
+  tip.style.top=Math.max(8,y-r.height-12)+"px";}
+function hideTip(){tip.style.display="none"}
+
+/* ---------- 02 PREVENT: band chart (exact deterministic recount) ---------- */
+const BANDS=[
+  {lab:"$0-50",n:961229,rate:0.215},{lab:"$50-100",n:556287,rate:0.011},
+  {lab:"$100-200",n:247605,rate:0.082},{lab:"$200-400",n:56904,rate:4.406},
+  {lab:"$400-600",n:15130,rate:1.646},{lab:"$600-800",n:5329,rate:19.553},
+  {lab:"$800-1000",n:4391,rate:52.198},{lab:"$1000-1200",n:2392,rate:48.537},
+  {lab:"$1200-1500",n:1224,rate:5.229},{lab:"$1500-2000",n:813,rate:0.0},
+  {lab:"$2000-3000",n:556,rate:0.0},{lab:"$3000+",n:534,rate:0.0}];
+(function(){
+  const svg=$("bandsvg"), W=640,H=320,PL=44,PR=10,PT=16,PB=58, iw=W-PL-PR, ih=H-PT-PB;
+  const max=55, x=i=>PL+i*(iw/BANDS.length), bw=iw/BANDS.length-5;
+  const y=v=>PT+ih*(1-v/max);
+  let s="";
+  for(const g of [0,10,20,30,40,50]){
+    s+=`<line x1="${PL}" y1="${y(g)}" x2="${W-PR}" y2="${y(g)}" stroke="#e3e8f0" stroke-width="${g?0.8:1.4}"/>
+        <text x="${PL-7}" y="${y(g)+4}" fill="#8792a3" font-size="10" text-anchor="end">${g}%</text>`;
+  }
+  s+=`<line x1="${PL}" y1="${y(0.521)}" x2="${W-PR}" y2="${y(0.521)}" stroke="#5b6576" stroke-dasharray="4 4" stroke-width="1"/>
+      <text x="${W-PR}" y="${y(0.521)-6}" fill="#5b6576" font-size="10" text-anchor="end">baseline 0.52%</text>`;
+  BANDS.forEach((b,i)=>{
+    const hot=b.lab==="$800-1000"||b.lab==="$1000-1200";
+    const bh=Math.max(ih*b.rate/max,b.rate>0?2:1.2);
+    s+=`<rect class="bandbar" data-i="${i}" x="${x(i)}" y="${PT+ih-bh}" width="${bw}" height="${bh}" rx="3"
+         fill="${hot?"#c43b3a":"#1d5fb8"}" opacity="${hot?1:.85}" tabindex="0" role="img"
+         aria-label="${b.lab}: ${b.rate}% fraud rate, ${b.n.toLocaleString()} transactions"/>`;
+    if(hot) s+=`<text x="${x(i)+bw/2}" y="${PT+ih-bh-7}" fill="#c43b3a" font-size="11" font-weight="700" text-anchor="middle">${b.rate.toFixed(1)}%</text>`;
+    s+=`<text x="${x(i)+bw/2}" y="${H-PB+16}" fill="#8792a3" font-size="8.5" text-anchor="middle" transform="rotate(-34 ${x(i)+bw/2} ${H-PB+16})">${b.lab}</text>`;
+  });
+  s+=`<text x="${PL}" y="${H-8}" fill="#8792a3" font-size="10">fraud rate by amount band · red = the proposed verification window</text>`;
+  svg.innerHTML=s;
+  svg.addEventListener("pointermove",e=>{
+    const t=e.target.closest(".bandbar"); if(!t) return hideTip();
+    const b=BANDS[+t.dataset.i];
+    showTip(`<b>${b.lab}</b><br>fraud rate <b>${b.rate}%</b><br><span class="t-muted">${b.n.toLocaleString()} transactions</span>`,e.clientX,e.clientY);
+  });
+  svg.addEventListener("pointerleave",hideTip);
+})();
+
+/* ---------- 03 DETECT: review depth x cost simulator (exact sweep) ---------- */
+const SWEEP=[
+  {k:"0.25%",n:1389,caught:849682,pct:"75.0%"},{k:"0.5%",n:2779,caught:1088406,pct:"96.0%"},
+  {k:"1%",n:5557,caught:1111503,pct:"98.1%"},{k:"1.5%",n:8336,caught:1116844,pct:"98.5%"},
+  {k:"2%",n:11114,caught:1118190,pct:"98.7%"},{k:"3%",n:16672,caught:1122172,pct:"99.0%"},
+  {k:"5%",n:27786,caught:1124026,pct:"99.2%"}];
+(function(){
+  let sel=2;
+  const kb=$("kbtns"), bars=$("netbars");
+  SWEEP.forEach((r,i)=>{
+    const b=document.createElement("button");
+    b.textContent=r.k; b.setAttribute("aria-pressed",i===sel);
+    b.onclick=()=>{sel=i;render()};
+    kb.appendChild(b);
+    const nb=document.createElement("button");
+    nb.className="nb"; nb.setAttribute("aria-pressed",i===sel);
+    nb.innerHTML=`<span class="v"></span><span class="bar"></span><span class="k">${r.k}</span>`;
+    nb.onclick=()=>{sel=i;render()};
+    bars.appendChild(nb);
+  });
+  function render(){
+    const cost=parseFloat($("cost").value);
+    $("costval").textContent="$"+cost.toFixed(1);
+    const nets=SWEEP.map(r=>r.caught-r.n*cost);
+    const best=nets.indexOf(Math.max(...nets)), maxN=Math.max(...nets,1);
+    kb.querySelectorAll("button").forEach((b,i)=>{
+      b.setAttribute("aria-pressed",i===sel); b.classList.toggle("best",i===best);});
+    bars.querySelectorAll(".nb").forEach((c,i)=>{
+      c.setAttribute("aria-pressed",i===sel);
+      const bar=c.querySelector(".bar");
+      bar.style.height=Math.max(4,nets[i]/maxN*150)+"px";
+      bar.style.background=i===best?"var(--green)":(i===sel?"var(--blue)":"var(--card2)");
+      c.querySelector(".v").textContent="$"+(nets[i]/1e6).toFixed(2)+"M";
+    });
+    const r=SWEEP[sel];
+    $("net").textContent="$"+((r.caught-r.n*cost)/1e6).toFixed(3)+"M";
+    $("caught").textContent=r.pct;
+    $("perday").textContent=Math.round(r.n/193);
+    $("roi").textContent=Math.round(r.caught/(r.n*cost))+"x";
+    $("optnote").innerHTML=`At <b>$${cost.toFixed(0)} per review</b> the best depth is <b>k = ${SWEEP[best].k}</b>. `+
+      `The curve is flat between 0.5% and 2%, so analyst capacity can pick the point; below 0.5% the net falls hard. `+
+      `Slide the cost past about $12 and watch the optimum tighten from 1% to 0.5%: the model does not choose, the economics do.`;
+  }
+  $("cost").addEventListener("input",render);
+  render();
+})();
+
+/* ---------- 04 RESPOND: episode + freeze ---------- */
+const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1,amt:968},
+  {t:5.1,amt:287},{t:6.2,amt:1120},{t:8.0,amt:199},{t:21.0,amt:641},{t:44.9,amt:415}];
+(function(){
+  const svg=$("epsvg"), W=640,H=200,PL=36,PR=12,AX=152, FREEZE=1.0;
+  const xOf=t=>PL+(W-PL-PR)*Math.log1p(t)/Math.log1p(46);
+  const rOf=a=>5+9*(a-199)/(1120-199);
+  let playing=false;
+  function base(){
+    let s=`<line x1="${PL}" y1="${AX}" x2="${W-PR}" y2="${AX}" stroke="#c9d2e0" stroke-width="1.5"/>`;
+    for(const t of [0,1,2,4,8,24,45])
+      s+=`<line x1="${xOf(t)}" y1="${AX}" x2="${xOf(t)}" y2="${AX+5}" stroke="#c9d2e0"/>
+          <text x="${xOf(t)}" y="${AX+20}" fill="#8792a3" font-size="10" text-anchor="middle">${t}h</text>`;
+    s+=`<text x="${PL}" y="16" fill="#8792a3" font-size="10.5">one compromised card · each dot is a fraudulent charge · size = amount</text>`;
+    return s;
+  }
+  function draw(progress){
+    const frz=$("freeze").checked;
+    let s=base(), lost=0, saved=0;
+    if(frz) s+=`<line x1="${xOf(FREEZE)}" y1="28" x2="${xOf(FREEZE)}" y2="${AX}" stroke="#0e8a63" stroke-width="2" stroke-dasharray="5 4"/>
+      <text x="${xOf(FREEZE)+6}" y="40" fill="#0e8a63" font-size="11" font-weight="700">card frozen at 1h</text>`;
+    for(const h of HITS){
+      if(h.t>progress) continue;
+      const blocked=frz&&h.t>=FREEZE;
+      if(blocked) saved+=h.amt; else lost+=h.amt;
+      const cx=xOf(h.t), r=rOf(h.amt), cy=AX-26-r;
+      s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${blocked?"none":"#c43b3a"}" stroke="${blocked?"#0e8a63":"#c43b3a"}" stroke-width="2"/>`;
+      if(blocked) s+=`<line x1="${cx-r*.7}" y1="${cy+r*.7}" x2="${cx+r*.7}" y2="${cy-r*.7}" stroke="#0e8a63" stroke-width="2"/>`;
+    }
+    svg.innerHTML=s;
+    $("lost").textContent=fmt$(lost);
+    $("saved").textContent=fmt$(saved);
+  }
+  function play(){
+    if(playing) return;
+    if(reduced){draw(46);return}
+    playing=true;
+    const t0=performance.now(), DUR=5200;
+    (function step(now){
+      const p=Math.min(1,(now-t0)/DUR)*46;
+      draw(p);
+      if(p<46&&playing) requestAnimationFrame(step); else playing=false;
+    })(t0);
+  }
+  $("play").onclick=play;
+  $("freeze").onchange=()=>{if(!playing)draw(46)};
+  draw(46);
+})();
+
+/* ---------- 05 PROTECT: one day of transactions ---------- */
+(function(){
+  const cv=$("daycanvas"), ctx=cv.getContext("2d");
+  const DAY=2879, TOUCH=29;
+  function draw(){
+    const w=cv.clientWidth||cv.parentElement.clientWidth-44;
+    const cols=Math.ceil(Math.sqrt(DAY*(w/300))), size=w/cols, rows=Math.ceil(DAY/cols);
+    const h=rows*size, dpr=Math.min(devicePixelRatio||1,2);
+    cv.width=w*dpr; cv.height=h*dpr; cv.style.height=h+"px"; ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,w,h);
+    const rnd=mulberry32(29), touched=new Set();
+    while(touched.size<TOUCH) touched.add(Math.floor(rnd()*DAY));
+    for(let i=0;i<DAY;i++){
+      const c=i%cols, r=Math.floor(i/cols);
+      const x=c*size+size/2, y=r*size+size/2;
+      if(touched.has(i)){
+        ctx.fillStyle="#c2571e";
+        ctx.beginPath();ctx.arc(x,y,Math.max(size*.34,2.6),0,7);ctx.fill();
+      }else{
+        ctx.fillStyle="#cdd5e1";
+        ctx.beginPath();ctx.arc(x,y,Math.max(size*.16,1),0,7);ctx.fill();
+      }
+    }
+  }
+  draw();
+  let t; addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(draw,150)});
+})();
+</script>
+</body>
+</html>
