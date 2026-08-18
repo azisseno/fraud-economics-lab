@@ -114,6 +114,27 @@
   #ratioSaved{background:var(--green)}
   #epsvg text{font-family:var(--mono)}
 
+  /* ---------- phone alert (third path) ---------- */
+  .thirdpath{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;margin-top:26px;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;
+    box-shadow:0 1px 2px rgba(28,36,51,.05),0 6px 20px rgba(28,36,51,.06)}
+  @media (max-width:760px){ .thirdpath{grid-template-columns:1fr;justify-items:center} }
+  .phone{width:250px;background:#0e1116;border-radius:26px;padding:14px 12px 18px;box-shadow:0 10px 30px rgba(28,36,51,.25)}
+  .phone .notch{width:80px;height:5px;border-radius:3px;background:#2a3245;margin:0 auto 12px}
+  .palert{background:#f5f7fa;border-radius:14px;padding:13px 14px;font-size:12.5px;color:#1c2433}
+  .palert .app{font:700 10px var(--mono);letter-spacing:.08em;color:#5b6576;margin-bottom:6px}
+  .palert .amt{font-size:17px;font-weight:800}
+  .palert .merch{color:#5b6576;margin:2px 0 8px}
+  .palert .risk{font:600 11px var(--mono);color:#c43b3a;background:#fdeeee;border-radius:7px;padding:6px 8px;margin-bottom:10px}
+  .palert .btns{display:flex;gap:8px}
+  .palert button{flex:1;border:none;border-radius:9px;padding:9px 4px;font:700 12px var(--sans);cursor:pointer}
+  .palert .byes{background:#e8edf5;color:#1c2433}
+  .palert .bno{background:#c43b3a;color:#fff}
+  .pfrozen{background:#0e8a63;color:#fff;border-radius:14px;padding:16px 14px;font-size:13px}
+  .pfrozen b{font-size:16px;display:block;margin-bottom:6px}
+  .pok{background:#f5f7fa;border-radius:14px;padding:16px 14px;font-size:13px;color:#1c2433}
+  .preplay{margin-top:10px;font:600 11px var(--mono);color:#9aa0a6;background:none;border:none;cursor:pointer;text-decoration:underline}
+
   /* ---------- protect ---------- */
   #daywrap{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
   #daycanvas{width:100%;height:auto;display:block;border-radius:6px}
@@ -269,6 +290,20 @@
         <div class="smallnote">episode drawn to the measured medians (illustrative) · portfolio figures are exact · the $2.37M/yr figure assumes freezing right after the first hit, so treat it as a ceiling</div>
       </div>
     </div>
+    <div class="thirdpath rv">
+      <div class="phone" role="group" aria-label="Mockup of a fraud alert on the cardholder's phone">
+        <div class="notch"></div>
+        <div id="pscreen"></div>
+      </div>
+      <div>
+        <div style="font-weight:800;font-size:17px;margin-bottom:6px">The fastest analyst is the cardholder</div>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:10px">There is a third way to confirm, quicker than any queue:
+        ask the one person who knows. The alert names the merchant and shows its measured fraud rate from our watchlist,
+        so the customer decides with context. One tap on <b style="color:var(--ink)">No</b> and the card is frozen in under a minute,
+        long before the median second hit at 1.1 hours. The analyst queue stays as the fallback for alerts nobody answers.</p>
+        <p class="smallnote" style="margin-top:0">machine confirms at the checkout (06) · analyst confirms the queue (05) · the customer confirms their own phone, fastest of all · proposed feature; merchant rates are measured, the 47 seconds is illustrative</p>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -377,7 +412,7 @@
       <p>The data is simulated (Sparkov, 1.85M transactions, 2019 to 2020), which makes patterns cleaner than live card fraud.
       Dollar benefits are illustrative upper bounds: they treat every flagged fraud dollar as saved and assume instant confirmation.</p>
       <p>The prevent, detect and respond layers act on overlapping dollars. They compose into one defense; they do not add up.</p>
-      <p>The checkout demo is illustrative policy logic distilled from the published rules, not the trained model.</p>
+      <p>The checkout demo and the phone alert are illustrative policy logic drawn from the published rules and watchlist rates, not the trained model.</p>
       <p>Every figure on this page comes from executed code on the full 555,719 transaction holdout: model metrics from a clean
       top to bottom run, the review sweep from the notebook's printed table, and band rates from a deterministic recount of all
       1,852,394 transactions.</p>
@@ -663,6 +698,25 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
   };
 })();
 
+/* ---------- 04b PHONE ALERT: third confirmation path ---------- */
+(function(){
+  const scr=$("pscreen");
+  function alertView(){
+    scr.innerHTML=`<div class="palert">
+      <div class="app">YOUR BANK · FRAUD ALERT · JUST NOW</div>
+      <div class="amt">$950.00</div>
+      <div class="merch">at Kozey-Boehm (online)</div>
+      <div class="risk">this merchant runs a 2.18% fraud rate, about 4x the 0.51% average</div>
+      <div class="btns">
+        <button class="byes" id="pyes">Yes, this was me</button>
+        <button class="bno" id="pno">No, freeze my card</button>
+      </div></div>`;
+    $("pyes").onclick=()=>{scr.innerHTML=`<div class="pok"><b>Thanks, enjoy.</b>Purchase confirmed in ten seconds. Nothing else to do.</div><button class="preplay" id="prep">replay the alert</button>`;$("prep").onclick=alertView;};
+    $("pno").onclick=()=>{scr.innerHTML=`<div class="pfrozen"><b>Card frozen.</b>47 seconds after the charge. The other nine hits of the episode never happen, and a new card is on its way.</div><button class="preplay" id="prep">replay the alert</button>`;$("prep").onclick=alertView;};
+  }
+  alertView();
+})();
+
 /* ---------- 06 FEATURE: mock checkout ---------- */
 (function(){
   const AMTS=[45,250,950,1600];
@@ -688,7 +742,9 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
     const out=$("outcome");
     if(a>=800&&a<1200&&online){
       out.innerHTML=card("--orange","One quick check",
-        `This amount sits in the verification window. We texted a code to the cardholder's phone.
+        `This amount sits in the verification window, so we texted a code to the cardholder's phone.
+         Why this check? Purchases in this range at online merchants carry elevated fraud risk.
+         We would rather take ten seconds than decline you.
          <button class="play" id="codebtn" style="margin-top:10px;display:block">Enter the code: 4 8 2 1</button>`,
         "PREVENT fired: half of online charges between $800 and $1,200 are fraud (98x baseline). A thief with a stolen card number fails this step, and the fraud dies before any money moves.");
       $("codebtn").onclick=()=>{
