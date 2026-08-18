@@ -290,20 +290,6 @@
         <div class="smallnote">episode drawn to the measured medians (illustrative) · portfolio figures are exact · the $2.37M/yr figure assumes freezing right after the first hit, so treat it as a ceiling</div>
       </div>
     </div>
-    <div class="thirdpath rv">
-      <div class="phone" role="group" aria-label="Mockup of a fraud alert on the cardholder's phone">
-        <div class="notch"></div>
-        <div id="pscreen"></div>
-      </div>
-      <div>
-        <div style="font-weight:800;font-size:17px;margin-bottom:6px">The fastest analyst is the cardholder</div>
-        <p style="color:var(--muted);font-size:14px;margin-bottom:10px">There is a third way to confirm, quicker than any queue:
-        ask the one person who knows. The alert names the merchant and shows its measured fraud rate from our watchlist,
-        so the customer decides with context. One tap on <b style="color:var(--ink)">No</b> and the card is frozen in under a minute,
-        long before the median second hit at 1.1 hours. The analyst queue stays as the fallback for alerts nobody answers.</p>
-        <p class="smallnote" style="margin-top:0">machine confirms at the checkout (06) · analyst confirms the queue (05) · the customer confirms their own phone, fastest of all · proposed feature; merchant rates are measured, the 47 seconds is illustrative</p>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -344,11 +330,11 @@
   <div class="wrap rv">
     <div class="eyebrow">06 · What we would ship</div>
     <h2>The policy, felt from the checkout</h2>
-    <p class="lede">The four moves become one decision engine. <b>Try a purchase</b> and watch it decide.
+    <p class="lede">The four moves become one decision engine, and we would ship it as <b>two features</b>: a quick check at the checkout, and an alert on the cardholder's phone. Try both.
     The logic is distilled from the published analysis for illustration; production thresholds would be recalibrated on live data.</p>
     <div class="split">
       <div class="panel">
-        <div class="eyebrow" style="margin-bottom:12px">MOCK CHECKOUT</div>
+        <div class="eyebrow" style="margin-bottom:12px">FEATURE 1 · AT THE CHECKOUT · MOCK</div>
         <div class="kbtns" id="amtbtns" role="group" aria-label="Choose an amount"></div>
         <div class="sliderrow" style="margin:14px 0 10px">
           <label for="amt">AMOUNT $</label>
@@ -364,7 +350,22 @@
         <div id="outcome" role="status"></div>
       </div>
     </div>
-    <div class="smallnote">rules behind the demo: the $800 to $1,200 online window runs 50.91% fraud (98x) · overnight runs 16x · 99.1% of purchases are never touched</div>
+    <div class="thirdpath rv">
+      <div class="phone" role="group" aria-label="Mockup of a fraud alert on the cardholder's phone">
+        <div class="notch"></div>
+        <div id="pscreen"></div>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:8px">FEATURE 2 · ON THE CARDHOLDER'S PHONE</div>
+        <div style="font-weight:800;font-size:17px;margin-bottom:6px">The fastest analyst is the cardholder</div>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:10px">There is a third way to confirm, quicker than any queue:
+        ask the one person who knows. The alert names the merchant and shows its measured fraud rate from our watchlist,
+        so the customer decides with context. One tap on <b style="color:var(--ink)">No</b> and the card is frozen in under a minute,
+        long before the median second hit at 1.1 hours. The analyst queue stays as the fallback for alerts nobody answers.</p>
+        <p class="smallnote" style="margin-top:0">feature 1 checks at the checkout · the analyst queue confirms within the hour (chapters 04 and 05) · feature 2 asks the cardholder, fastest of all · proposed features; merchant rates are measured, the 47 seconds is illustrative</p>
+      </div>
+    </div>
+    <div class="smallnote">rules behind the demos: the $800 to $1,200 online window runs 50.91% fraud (98x) · overnight runs 16x · 99.1% of purchases are never touched</div>
   </div>
 </section>
 
