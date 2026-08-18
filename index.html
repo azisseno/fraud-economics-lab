@@ -742,15 +742,15 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
     const a=parseFloat($("amt").value)||0, online=$("online").checked, night=$("night").checked;
     const out=$("outcome");
     if(a>=800&&a<1200&&online){
-      out.innerHTML=card("--orange","One quick check",
-        `This amount sits in the verification window, so we texted a code to the cardholder's phone.
-         Why this check? Purchases in this range at online merchants carry elevated fraud risk.
-         We would rather take ten seconds than decline you.
-         <button class="play" id="codebtn" style="margin-top:10px;display:block">Enter the code: 4 8 2 1</button>`,
-        "PREVENT fired: half of online charges between $800 and $1,200 are fraud (98x baseline). A thief with a stolen card number fails this step, and the fraud dies before any money moves.");
+      out.innerHTML=card("--orange","Confirm your purchase",
+        `<div style="font-size:22px;font-weight:800;color:var(--ink)">$${a.toLocaleString()}</div>
+         <div style="margin:2px 0 10px">to <b style="color:var(--ink)">Kozey-Boehm</b> (online)</div>
+         We texted a code to your phone. Ten seconds beats a declined card.
+         <button class="play" id="codebtn" style="margin-top:12px;display:block">Enter the code: 4 8 2 1</button>`,
+        "PREVENT fired: half of online charges between $800 and $1,200 are fraud (98x baseline). The screen names who is charging what; a thief with a stolen card number fails the code, and the fraud dies before any money moves.");
       $("codebtn").onclick=()=>{
-        out.innerHTML=card("--green","Approved, about 10 seconds later",
-          "The real cardholder barely noticed. A stolen card would have been stopped cold, before authorization.",
+        out.innerHTML=card("--green","Approved",
+          `$${a.toLocaleString()} to Kozey-Boehm confirmed. That took about ten seconds.`,
           "PREVENT: the window rule costs the customer seconds and costs the bank nothing. No analyst, no model, no queue.");
       };
     } else if(night&&online&&a>=236.86){
