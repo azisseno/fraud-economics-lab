@@ -376,7 +376,7 @@
     <div class="controls" style="margin:0 0 4px"><button class="play" id="stairplay">Play the staircase</button><button class="play ghost" id="stairreset">Reset</button></div>
     <div class="leakwrap rv">
       <div class="leakbar" role="img" aria-label="Of the 2.56 million dollar yearly leak, 2.37 million is recovered by the freeze rule, leaving 0.19 million"><span></span></div>
-      <div class="leaklabels"><span class="c-green">$2.37M/yr recovered by one rule</span><span class="c-red">$0.19M still leaks</span></div>
+      <div class="leaklabels"><span class="c-green" id="lgl">$2.37M/yr recovered by one rule</span><span class="c-red" id="lrl">$0.19M/yr still leaks</span></div>
       <div class="smallnote" style="margin-top:6px">the whole case in one bar: step 2 recovers about 93% of step 1. The cards below say who does what.</div>
     </div>
     <div class="stairs">
@@ -675,18 +675,29 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
       })(t0);
     });
   }
+  function leakLabels(p){
+    $("lgl").textContent="$"+(2.37*p).toFixed(2)+"M/yr recovered by one rule";
+    $("lrl").textContent="$"+(2.56-2.37*p).toFixed(2)+"M/yr still leaks";
+  }
   function reset(){
     span.style.transition="none"; span.style.width="0%";
+    leakLabels(0);
     scope.querySelectorAll("[data-count]").forEach(el=>{
       el.textContent=(el.dataset.prefix||"")+"0"+(el.dataset.suffix||"");});
   }
   $("stairreset").onclick=reset;
   $("stairplay").onclick=()=>{
-    if(reduced){span.style.width="92.5%";return;}
+    if(reduced){span.style.width="92.5%";leakLabels(1);return;}
     reset();
     void span.offsetWidth;
     span.style.transition="width 1.4s ease .1s";
     span.style.width="92.5%";
+    const t0=performance.now();
+    (function lt(now){
+      const p=Math.min(1,Math.max(0,(now-t0-100)/1400));
+      leakLabels(p);
+      if(p<1) requestAnimationFrame(lt);
+    })(t0);
     countUp();
   };
 })();
