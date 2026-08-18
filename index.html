@@ -161,9 +161,6 @@
 
   /* ---------- footer ---------- */
   footer{border-top:1px solid var(--line);margin-top:88px;padding:40px 0 56px}
-  .honesty{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:20px 22px;max-width:72ch}
-  .honesty h3{font-size:14px;font-weight:800;margin-bottom:8px}
-  .honesty p{font-size:13.5px;color:var(--muted);margin-bottom:8px}
   .credits{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:28px;
     font:500 12px/1.7 var(--mono);color:var(--faint)}
   .credits b{color:var(--muted);font-weight:600}
@@ -409,16 +406,6 @@
 <!-- ============ FOOTER ============ -->
 <footer>
   <div class="wrap">
-    <div class="honesty rv">
-      <h3>Read this before quoting the numbers</h3>
-      <p>The data is simulated (Sparkov, 1.85M transactions, 2019 to 2020), which makes patterns cleaner than live card fraud.
-      Dollar benefits are illustrative upper bounds: they treat every flagged fraud dollar as saved and assume instant confirmation.</p>
-      <p>The prevent, detect and respond layers act on overlapping dollars. They compose into one defense; they do not add up.</p>
-      <p>The checkout demo and the phone alert are illustrative policy logic drawn from the published rules and watchlist rates, not the trained model.</p>
-      <p>Every figure on this page comes from executed code on the full 555,719 transaction holdout: model metrics from a clean
-      top to bottom run, the review sweep from the notebook's printed table, and band rates from a deterministic recount of all
-      1,852,394 transactions.</p>
-    </div>
     <div class="credits">
       <div><b>Built by Team 2</b><br>MSIS 502 Business Data Analysis · UW Foster MSIS · 2026-08-17</div>
       <div>companion to our team presentation and Colab notebook<br>fraud detection on the Sparkov simulated card dataset</div>
