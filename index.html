@@ -121,8 +121,7 @@
   /* ---------- staircase ---------- */
   .leakwrap{margin:26px 0 6px}
   .leakbar{height:30px;border-radius:8px;background:var(--red);overflow:hidden}
-  .leakbar span{display:block;height:100%;width:0;background:var(--green);transition:width 1.4s ease .3s}
-  .leakwrap.in .leakbar span{width:92.5%}
+  .leakbar span{display:block;height:100%;width:92.5%;background:var(--green);transition:width 1.4s ease .1s}
   @media (prefers-reduced-motion: reduce){ .leakbar span{transition:none} }
   .leaklabels{display:flex;justify-content:space-between;font:600 12.5px var(--mono);margin-top:8px}
   .stairs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:end;margin-top:30px}
@@ -340,6 +339,7 @@
     <div class="eyebrow">07 · The whole case</div>
     <h2>The business case is a staircase</h2>
     <p class="lede">Three steps, each one standing on the last: the problem, the fix, and the engine that makes the fix fire in time.</p>
+    <div class="controls" style="margin:0 0 4px"><button class="play" id="stairplay">Play the staircase</button></div>
     <div class="leakwrap rv">
       <div class="leakbar" role="img" aria-label="Of the 2.56 million dollar yearly leak, 2.37 million is recovered by the freeze rule, leaving 0.19 million"><span></span></div>
       <div class="leaklabels"><span class="c-green">$2.37M/yr recovered by one rule</span><span class="c-red">$0.19M still leaks</span></div>
@@ -435,22 +435,9 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a
 /* ---------- scroll reveals ---------- */
 (function(){
   const io=new IntersectionObserver(es=>es.forEach(e=>{
-    if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);
-      if(e.target.closest("#staircase")) countUp(e.target);}
+    if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}
   }),{threshold:.18});
   document.querySelectorAll(".rv").forEach(el=>io.observe(el));
-  function countUp(scope){
-    if(reduced) return;
-    scope.querySelectorAll("[data-count]").forEach(el=>{
-      const end=parseFloat(el.dataset.count), pre=el.dataset.prefix||"", suf=el.dataset.suffix||"";
-      const dec=(String(end).split(".")[1]||"").length, t0=performance.now();
-      (function tick(now){
-        const p=Math.min(1,(now-t0)/900), v=(end*(0.2+0.8*p)).toFixed(dec);
-        el.textContent=pre+v+suf;
-        if(p<1) requestAnimationFrame(tick); else el.textContent=pre+end.toFixed(dec)+suf;
-      })(t0);
-    });
-  }
 })();
 
 /* ---------- tooltip helper ---------- */
@@ -647,6 +634,33 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
   layout(); draw(1);
   $("dayplay").onclick=play;
   let t; addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(()=>{layout();if(!playing)draw(1)},150)});
+})();
+
+/* ---------- 07 STAIRCASE: play / replay ---------- */
+(function(){
+  const span=document.querySelector(".leakbar span");
+  const scope=document.getElementById("staircase");
+  function countUp(){
+    scope.querySelectorAll("[data-count]").forEach(el=>{
+      const end=parseFloat(el.dataset.count), pre=el.dataset.prefix||"", suf=el.dataset.suffix||"";
+      const dec=(String(end).split(".")[1]||"").length, t0=performance.now();
+      (function tick(now){
+        const p=Math.min(1,(now-t0)/1200);
+        el.textContent=pre+(end*p).toFixed(dec)+suf;
+        if(p<1) requestAnimationFrame(tick); else el.textContent=pre+end.toFixed(dec)+suf;
+      })(t0);
+    });
+  }
+  $("stairplay").onclick=()=>{
+    if(reduced) return;
+    span.style.transition="none"; span.style.width="0%";
+    scope.querySelectorAll("[data-count]").forEach(el=>{
+      el.textContent=(el.dataset.prefix||"")+"0"+(el.dataset.suffix||"");});
+    void span.offsetWidth;
+    span.style.transition="width 1.4s ease .1s";
+    span.style.width="92.5%";
+    countUp();
+  };
 })();
 
 /* ---------- 06 FEATURE: mock checkout ---------- */
