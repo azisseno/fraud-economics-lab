@@ -104,6 +104,7 @@
   .play{background:var(--blue);border:none;color:#fff;font:800 15px var(--sans);border-radius:10px;
     padding:11px 22px;cursor:pointer}
   .play:hover{filter:brightness(1.1)}
+  .play.ghost{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
   .toggle{display:flex;align-items:center;gap:9px;font:700 14px var(--sans);cursor:pointer;user-select:none;
     background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 16px}
   .toggle input{accent-color:var(--green);width:17px;height:17px}
@@ -375,7 +376,7 @@
     <div class="eyebrow">07 · The whole case</div>
     <h2>The business case is a staircase</h2>
     <p class="lede">Three steps, each one standing on the last: the problem, the fix, and the engine that makes the fix fire in time.</p>
-    <div class="controls" style="margin:0 0 4px"><button class="play" id="stairplay">Play the staircase</button></div>
+    <div class="controls" style="margin:0 0 4px"><button class="play" id="stairplay">Play the staircase</button><button class="play ghost" id="stairreset">Reset</button></div>
     <div class="leakwrap rv">
       <div class="leakbar" role="img" aria-label="Of the 2.56 million dollar yearly leak, 2.37 million is recovered by the freeze rule, leaving 0.19 million"><span></span></div>
       <div class="leaklabels"><span class="c-green">$2.37M/yr recovered by one rule</span><span class="c-red">$0.19M still leaks</span></div>
@@ -687,11 +688,15 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
       })(t0);
     });
   }
-  $("stairplay").onclick=()=>{
-    if(reduced) return;
+  function reset(){
     span.style.transition="none"; span.style.width="0%";
     scope.querySelectorAll("[data-count]").forEach(el=>{
       el.textContent=(el.dataset.prefix||"")+"0"+(el.dataset.suffix||"");});
+  }
+  $("stairreset").onclick=reset;
+  $("stairplay").onclick=()=>{
+    if(reduced){span.style.width="92.5%";return;}
+    reset();
     void span.offsetWidth;
     span.style.transition="width 1.4s ease .1s";
     span.style.width="92.5%";
