@@ -274,10 +274,19 @@
     <h2>99.1% of customers never feel any of this</h2>
     <p class="lede">Here is one average day: about 2,879 transactions. The system quietly scores all of them and asks a human
     to look at <b>29</b>. Everyone else's purchase goes through untouched, and the few who are flagged get a 10 second
-    verification, never an automatically declined card.</p>
+    verification, never an automatically declined card. <b>Press play</b> and watch the day happen.</p>
     <div id="daywrap">
+      <div class="controls" style="margin:0 0 14px;justify-content:space-between">
+        <button class="play" id="dayplay">Watch one day</button>
+        <div id="dayclock" style="font:800 22px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums">11:59 pm</div>
+      </div>
       <canvas id="daycanvas" role="img" aria-label="Grid of 2,879 dots for one day of transactions. 29 highlighted dots are the only ones reviewed by a person."></canvas>
-      <div class="smallnote" style="margin-top:12px">one day of the test period, drawn to scale · <span class="c-orange">orange</span> = the 29 transactions a person reviews · everything else is untouched</div>
+      <div class="chips" style="margin-top:14px">
+        <div class="chip"><div class="big c-blue" id="cApproved">2,850</div><div class="cap">approved instantly, nothing to notice</div></div>
+        <div class="chip"><div class="big c-orange" id="cReviewed">29</div><div class="cap">sent to a person for a look</div></div>
+        <div class="chip"><div class="big c-green" id="cDeclined">0</div><div class="cap">declined automatically. Zero. That is the design.</div></div>
+      </div>
+      <div class="smallnote" style="margin-top:12px">one average day of the test period, drawn to scale · every dot is one purchase, appearing as the day runs · <span class="c-orange">orange</span> = a person takes a look</div>
     </div>
     <div class="chips">
       <div class="chip"><div class="big">0.9%</div><div class="cap">of transactions ever enter the review queue</div></div>
@@ -575,32 +584,57 @@ const HITS=[{t:0,amt:318},{t:1.1,amt:402},{t:1.9,amt:414},{t:3.0,amt:522},{t:4.1
   draw(46);
 })();
 
-/* ---------- 05 PROTECT: one day of transactions ---------- */
+/* ---------- 05 PROTECT: watch one day ---------- */
 (function(){
   const cv=$("daycanvas"), ctx=cv.getContext("2d");
   const DAY=2879, TOUCH=29;
-  function draw(){
+  const rnd=mulberry32(29), touched=new Set();
+  while(touched.size<TOUCH) touched.add(Math.floor(rnd()*DAY));
+  let cols, size, rows, playing=false;
+  function layout(){
     const w=cv.clientWidth||cv.parentElement.clientWidth-44;
-    const cols=Math.ceil(Math.sqrt(DAY*(w/300))), size=w/cols, rows=Math.ceil(DAY/cols);
+    cols=Math.ceil(Math.sqrt(DAY*(w/300))); size=w/cols; rows=Math.ceil(DAY/cols);
     const h=rows*size, dpr=Math.min(devicePixelRatio||1,2);
     cv.width=w*dpr; cv.height=h*dpr; cv.style.height=h+"px"; ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.clearRect(0,0,w,h);
-    const rnd=mulberry32(29), touched=new Set();
-    while(touched.size<TOUCH) touched.add(Math.floor(rnd()*DAY));
-    for(let i=0;i<DAY;i++){
+  }
+  function draw(p){
+    const n=Math.min(DAY,Math.floor(DAY*p));
+    ctx.clearRect(0,0,cv.width,cv.height);
+    let rev=0;
+    for(let i=0;i<n;i++){
       const c=i%cols, r=Math.floor(i/cols);
       const x=c*size+size/2, y=r*size+size/2;
       if(touched.has(i)){
+        rev++;
+        const fresh = n-i < 60;
         ctx.fillStyle="#c2571e";
-        ctx.beginPath();ctx.arc(x,y,Math.max(size*.34,2.6),0,7);ctx.fill();
+        ctx.beginPath();ctx.arc(x,y,Math.max(size*(fresh?0.5:0.34),2.6),0,7);ctx.fill();
       }else{
         ctx.fillStyle="#cdd5e1";
         ctx.beginPath();ctx.arc(x,y,Math.max(size*.16,1),0,7);ctx.fill();
       }
     }
+    $("cApproved").textContent=(n-rev).toLocaleString();
+    $("cReviewed").textContent=rev;
+    $("cDeclined").textContent="0";
+    const mins=Math.floor(1439*p), h24=Math.floor(mins/60), m=mins%60;
+    const ampm=h24<12?"am":"pm", h12=((h24+11)%12)+1;
+    $("dayclock").textContent=`${h12}:${String(m).padStart(2,"0")} ${ampm}`;
   }
-  draw();
-  let t; addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(draw,150)});
+  function play(){
+    if(playing) return;
+    if(reduced){draw(1);return}
+    playing=true;
+    const t0=performance.now(), DUR=14000;
+    (function step(now){
+      const p=Math.min(1,(now-t0)/DUR);
+      draw(p);
+      if(p<1&&playing) requestAnimationFrame(step); else playing=false;
+    })(t0);
+  }
+  layout(); draw(1);
+  $("dayplay").onclick=play;
+  let t; addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(()=>{layout();if(!playing)draw(1)},150)});
 })();
 
 /* ---------- 06 FEATURE: mock checkout ---------- */
