@@ -119,7 +119,13 @@
   #daycanvas{width:100%;height:auto;display:block;border-radius:6px}
 
   /* ---------- staircase ---------- */
-  .stairs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:end;margin-top:34px}
+  .leakwrap{margin:26px 0 6px}
+  .leakbar{height:30px;border-radius:8px;background:var(--red);overflow:hidden}
+  .leakbar span{display:block;height:100%;width:0;background:var(--green);transition:width 1.4s ease .3s}
+  .leakwrap.in .leakbar span{width:92.5%}
+  @media (prefers-reduced-motion: reduce){ .leakbar span{transition:none} }
+  .leaklabels{display:flex;justify-content:space-between;font:600 12.5px var(--mono);margin-top:8px}
+  .stairs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:end;margin-top:30px}
   @media (max-width:720px){ .stairs{grid-template-columns:1fr;align-items:stretch} }
   .step{border-radius:14px;padding:20px;border:1px solid var(--line)}
   .step .n{font:600 11px var(--mono);letter-spacing:.12em;color:var(--faint)}
@@ -333,22 +339,27 @@
   <div class="wrap rv">
     <div class="eyebrow">07 · The whole case</div>
     <h2>The business case is a staircase</h2>
-    <p class="lede">Three steps, each one standing on the last.</p>
+    <p class="lede">Three steps, each one standing on the last: the problem, the fix, and the engine that makes the fix fire in time.</p>
+    <div class="leakwrap rv">
+      <div class="leakbar" role="img" aria-label="Of the 2.56 million dollar yearly leak, 2.37 million is recovered by the freeze rule, leaving 0.19 million"><span></span></div>
+      <div class="leaklabels"><span class="c-green">$2.37M/yr recovered by one rule</span><span class="c-red">$0.19M still leaks</span></div>
+      <div class="smallnote" style="margin-top:6px">the whole case in one bar: step 2 recovers about 93% of step 1. The cards below say who does what.</div>
+    </div>
     <div class="stairs">
       <div class="step s1 rv">
-        <div class="n">STEP 1 · DO NOTHING</div>
+        <div class="n">STEP 1 · THE PROBLEM</div>
         <div class="amt c-red" data-count="2.56" data-prefix="$" data-suffix="M/yr">$2.56M/yr</div>
-        <p>keeps leaking. That is what this portfolio loses to fraud today.</p>
+        <p>keeps leaking if nothing changes. That is the bill for doing nothing.</p>
       </div>
       <div class="step s2 rv">
-        <div class="n">STEP 2 · CHANGE ONE PROCESS</div>
+        <div class="n">STEP 2 · THE FIX: ONE RULE, FROM OUR ANALYSIS</div>
         <div class="amt c-green" data-count="2.37" data-prefix="$" data-suffix="M/yr">$2.37M/yr</div>
-        <p>comes back if cards are frozen at the first confirmed fraud. No new technology. The catch: confirmation has to be fast.</p>
+        <p>comes back by freezing a card at its first confirmed fraud. Cheap to run, but nobody writes this rule without knowing fraud arrives in bursts, and it only pays if confirmation lands inside an hour.</p>
       </div>
       <div class="step s3 rv">
-        <div class="n">STEP 3 · THE MODEL MAKES IT FAST</div>
+        <div class="n">STEP 3 · THE ENGINE: OUR MODEL BUYS THAT HOUR</div>
         <div class="amt c-blue" data-count="86" data-suffix="%">86%</div>
-        <p>of episode starting frauds sit in the model's top 1% of scores: a queue of 29 reviews a day, small enough to confirm each alert inside the hour. Half a person runs the defense of the whole portfolio.</p>
+        <p>of episode starting frauds sit in the model's top 1%: a queue of 29 a day, confirmable inside the hour. This number is not money. It is why step 2's money is reachable at all.</p>
       </div>
     </div>
     <div class="closing rv">
